@@ -5,6 +5,11 @@ function use(){
     var email=document.getElementById("email").value;
     var passord=document.getElementById("password").value;
     var playerName=document.getElementById("playerName").value;
+    
+    //it is only for test
+email="a"; 
+password="wsad"
+playerName="qwerty"
 
     var request={
         email : email,
