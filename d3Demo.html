@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+  .link {
+    stroke: #999;
+    stroke-opacity: 0.6;
+  }
+  .node {
+    stroke: #fff;
+    stroke-width: 1.5px;
+    fill: #69b3a2;
+  }
+  text {
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+  }
+</style>
+<body>
+<svg width="800" height="600"></svg>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+// Przykładowe dane
+const nodes = [
+  { id: 'Pokój 1' },
+  { id: 'Pokój 2' },
+  { id: 'Pokój 3' },
+  { id: 'Pokój 4' },
+  { id: 'Pokój 5' },
+];
+
+const links = [
+  { source: 'Pokój 1', target: 'Pokój 2' },
+  { source: 'Pokój 2', target: 'Pokój 3' },
+  { source: 'Pokój 3', target: 'Pokój 4' },
+  { source: 'Pokój 4', target: 'Pokój 5' },
+  // Usunięto połączenie między Pokojem 1 a Pokojem 5
+  { source: 'Pokój 2', target: 'Pokój 4' },
+];
+
+// Utworzenie kontenera SVG
+const svg = d3.select('svg');
+
+// Utworzenie symulacji z dostosowanymi siłami
+const simulation = d3.forceSimulation(nodes)
+  .force('link', d3.forceLink(links)
+    .id(d => d.id)
+    .distance(200) // Zwiększenie odległości między połączonymi węzłami
+    .strength(1))
+  .force('charge', d3.forceManyBody()
+    .strength(-500)) // Zwiększenie siły odpychania
+  .force('center', d3.forceCenter(svg.attr('width') / 2, svg.attr('height') / 2))
+  .force('collision', d3.forceCollide()
+    .radius(30)) // Dodanie siły kolizji, aby zapobiec nakładaniu się węzłów
+  .stop();
+
+// Uruchomienie symulacji przez określoną liczbę iteracji, aby uzyskać stabilny układ
+for (let i = 0; i < 300; ++i) simulation.tick();
+
+// Dodanie krawędzi
+const link = svg.append('g')
+  .attr('class', 'links')
+  .selectAll('line')
+  .data(links)
+  .enter().append('line')
+  .attr('class', 'link')
+  .attr('x1', d => d.source.x)
+  .attr('y1', d => d.source.y)
+  .attr('x2', d => d.target.x)
+  .attr('y2', d => d.target.y);
+
+// Dodanie węzłów
+const node = svg.append('g')
+  .attr('class', 'nodes')
+  .selectAll('circle')
+  .data(nodes)
+  .enter().append('circle')
+  .attr('class', 'node')
+  .attr('r', 15)
+  .attr('cx', d => d.x)
+  .attr('cy', d => d.y)
+  .call(drag(simulation));
+
+// Dodanie etykiet
+const label = svg.append('g')
+  .attr('class', 'labels')
+  .selectAll('text')
+  .data(nodes)
+  .enter().append('text')
+  .attr('x', d => d.x)
+  .attr('y', d => d.y - 20)
+  .attr('text-anchor', 'middle')
+  .text(d => d.id);
+
+  // Aktualizacja pozycji przy każdym kroku symulacji
+  simulation.on('tick', () => {
+  link
+    .attr('x1', d => d.source.x)
+    .attr('y1', d => d.source.y)
+    .attr('x2', d => d.target.x)
+    .attr('y2', d => d.target.y);
+
+  node
+    .attr('cx', d => d.x)
+    .attr('cy', d => d.y);
+
+  label
+    .attr('x', d => d.x)
+    .attr('y', d => d.y);
+});
+
+// Funkcje obsługi przeciągania
+function drag(simulation) {
+  function dragstarted(event, d) {
+    if (!event.active) simulation.alphaTarget(0.3).restart();
+    d.fx = d.x;
+    d.fy = d.y;
+  }
+
+  function dragged(event, d) {
+    d.fx = event.x;
+    d.fy = event.y;
+  }
+
+  function dragended(event, d) {
+    if (!event.active) simulation.alphaTarget(0);
+    d.fx = null;
+    d.fy = null;
+  }
+
+  return d3.drag()
+    .on('start', dragstarted)
+    .on('drag', dragged)
+    .on('end', dragended);
+}
+
+</script>
+</body>
