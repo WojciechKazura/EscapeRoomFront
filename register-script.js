@@ -24,15 +24,10 @@ fetch("http://localhost:8080/api/v1/auth",{
         "Content-Type" : "application/json"
     },
     body:json
-
 }).then(response=>response.json())
 .then(data=>{
-
-window.location.href="/escaperoomFrondend/home.html?id="+data.id;
+window.location.href="/escaperoomFrondend/home.html?id="+data.gameId;
 }).catch(error=>console.error("error:"+error));
-
-
-
 
 
 }

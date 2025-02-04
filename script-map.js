@@ -1,96 +1,32 @@
-
-var roomItems = [];
-var playerItems = [];
-var messageView = document.getElementById("messageView");
-var itemsTable = document.getElementById("itemsTable");
-var playerTable = document.getElementById("playerTable");
-var urlParams = new URLSearchParams(window.location.search);
-var id = urlParams.get("id");
-
-//zmienne do mapy
-let gameId=id;
+let gameId=0;
 let activeRoom=0;
 let source;
 let links;
 let nodes;
 let isGame=false;
 
+const buttonOne = document.getElementById("create");
+buttonOne.addEventListener("click", use);
 
-refreshItems();
-viePlayerItems();
-
-function refreshItems() {
-    fetch("http://localhost:8080/api/v1/games/"+id+"/active-scene", {
-        method: "GET"
-    }).then(response => response.json())
-        .then(data => {
-            roomItems = data.itemList;
-            addItemsToItemsTable();
-            nextActiveRoom(data.id);
-        }).catch(error => console.error("error:" + error));
+function use() {
+  if(!isGame){
+    isGame=true;
+    createGame();
+  }
+}
+var request = {
+    name: "jeden",
+    howManyRooms: 3
 }
 
-
-function addItemsToItemsTable() {
-    itemsTable.innerHTML = "";
-    for (var item of roomItems) {
-        var row = itemsTable.insertRow(-1);//-1 ozanacza to na koniec tabeli
-        var cell = row.insertCell(0);
-        var cell2 = row.insertCell(1);
-        cell.innerHTML = item.name;
-        var button = document.createElement("button");
-        button.innerHTML = "Użyj";
-        button.id = item.id;
-        cell2.appendChild(button);
-        button.addEventListener("click", use);
-    }
-}
-
-function viePlayerItems() {
-    playerTable.innerHTML = "";
-    fetch("http://localhost:8080/api/v1/games/"+id+"/player", {
-        method: "GET"
-    }).then(response => response.json())
-        .then(data => {
-            playerItems = data.itemList;
-            for (var item of playerItems) {
-                var row = playerTable.insertRow(-1);
-                var cell = row.insertCell(0);
-                cell.innerHTML = item.name;
-            }
-            document.getElementById("howManyCoins").innerHTML = data.howManyCoins;
-        }).catch(error => console.error("error:" + error));
-}
-
-function use(event) {
-    var request = {
-        itemId: event.target.id,
-        gameId: id
-    }
+function createGame() {
     var json = JSON.stringify(request);
-    fetch("http://localhost:8080/api/v1/actions", {
+    fetch("http://localhost:8080/games", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
         },
         body: json
-
-    }).then(response => response.json())
-        .then(data => {
-            messageView.innerHTML = data.text;
-            viePlayerItems();
-            refreshItems();
-
-        }).catch(error => console.error("error:" + error));
-}
-
-/////////////mapa
-
-loadGame();
-
-function loadGame() {
-    fetch("http://localhost:8080/api/v1/games/"+gameId, {
-        method: "GET",
     }).then(response => response.json())
     .then(data => {
         links=data.connections;
@@ -119,24 +55,24 @@ newActiveRoomNode.classList.remove('passive');
 activeRoom=newActiveRoom;
 }
 
-// function changeActiveRoom(newActiveRoom){
-//   const url = new URL('http://localhost:8080/games/'+gameId+'/moves');
-//   url.searchParams.append('nextRoomId',newActiveRoom);
-//   fetch(url, {
-//       method: "POST"
-//   }).then(data => {
-//       if(!data.ok){
-//           throw new Error(`HTTP error! Status: ${data.status}`);
-//       }
-//           nextActiveRoom(newActiveRoom); //i tak to robi nawet jesli jest błąd 400
-//       }).catch(error => console.error("error:" + error.stack));  
+function changeActiveRoom(newActiveRoom){
+  const url = new URL('http://localhost:8080/games/'+gameId+'/moves');
+  url.searchParams.append('nextRoomId',newActiveRoom);
+  fetch(url, {
+      method: "POST"
+  }).then(data => {
+      if(!data.ok){
+          throw new Error(`HTTP error! Status: ${data.status}`);
+      }
+          nextActiveRoom(newActiveRoom); //i tak to robi nawet jesli jest błąd 400
+      }).catch(error => console.error("error:" + error.stack));  
 
-// }
+}
 
-// function clickRoom(event){
-//   console.log("move to room of id: " + event.target.getAttribute("id") + " from room of id: " + activeRoom);
-//   changeActiveRoom(event.target.getAttribute("id"));
-//   }
+function clickRoom(event){
+  console.log("move to room of id: " + event.target.getAttribute("id") + " from room of id: " + activeRoom);
+  changeActiveRoom(event.target.getAttribute("id"));
+  }
 
 function draw3dMap(){
 startSymulation();
@@ -189,7 +125,7 @@ const node = svg.append('g')
   .attr('cx', d => d.x)
   .attr('cy', d => d.y)
   .attr('id', d => d.id)
-  //.on('click', clickRoom)
+  .on('click', clickRoom)
   .call(drag(simulation));
   
 
@@ -247,4 +183,3 @@ function drag(simulation) {
     .on('drag', dragged)
     .on('end', dragended);
 }
-
